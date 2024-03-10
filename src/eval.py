@@ -2,9 +2,11 @@ from typing import Any, Dict, List, Tuple
 
 import hydra
 import rootutils
+from torch.utils.data import DataLoader
 from lightning import LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
+from data.components.scg_datamodule import MyDataset
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 # ------------------------------------------------------------------------------------ #
@@ -72,10 +74,15 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         log_hyperparameters(object_dict)
 
     log.info("Starting testing!")
-    trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+    # trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
 
     # for predictions use trainer.predict(...)
-    # predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
+    test_dir = './datasets/motion_scg/'
+
+    test_set = MyDataset(test_dir, "wxw", train=True)
+    dataloaders = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=0)
+    
+    predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
 
     metric_dict = trainer.callback_metrics
 
